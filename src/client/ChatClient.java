@@ -17,15 +17,19 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 
-public class ChatClient extends Application {
-    ObjectOutputStream toServer;
-    ObjectInputStream fromServer;
+public class ChatClient extends Application implements ServerObserver {
 
-    TextField username;
-    TextField address;
-    TextField port;
+    private ObjectOutputStream toServer;
+    private ObjectInputStream fromServer;
 
-    Stage primary;
+    private TextField username;
+    private TextField address;
+    private TextField port;
+
+    private Stage primary;
+
+    private TextArea chatArea;
+    private TextField chatInput;
 
     public static void main(String[] args) {
         launch(args);
@@ -46,7 +50,7 @@ public class ChatClient extends Application {
         HBox usernameInputBox = createUsernameInputBox();
 
         Button proceedButton = new Button("OK");
-        proceedButton.setOnAction(e -> openChat());
+        proceedButton.setOnAction(e -> launchChat());
 
         HBox userInput = new HBox(usernameInputBox, proceedButton);
         return new Scene(userInput);
@@ -55,7 +59,7 @@ public class ChatClient extends Application {
     private HBox createUsernameInputBox() {
         Label usernameLabel = new Label("Username: ");
         username = new TextField();
-        username.setOnAction(e -> openChat());
+        username.setOnAction(e -> launchChat());
         return new HBox(usernameLabel, username);
     }
 
@@ -97,76 +101,68 @@ public class ChatClient extends Application {
         return new HBox(5, addressLabel, address);
     }
 
-    private void openChat() {
+    private void launchChat() {
+        createAndOpenChatScene();
+        configureChatInputField();
+        openSocketStreams();
+        new Thread(new ServerListener(fromServer, this)).start();
+    }
 
-            String name = username.getText().trim();
+    private void openSocketStreams() {
+        try {
+            Socket socket = new Socket(address.getText(), Integer.parseInt(port.getText()));
 
-            BorderPane paneForTextField = new BorderPane();
-            paneForTextField.setPadding(new Insets(5, 5, 5, 5));
-            paneForTextField.setLeft(new Label("Input message: "));
+            fromServer = new ObjectInputStream(socket.getInputStream());
 
-            TextField textField = new TextField();
-            textField.setAlignment(Pos.BOTTOM_LEFT);
-            paneForTextField.setCenter(textField);
+            toServer = new ObjectOutputStream(socket.getOutputStream());
+        }
+        catch (IOException ex) {
+            chatArea.appendText(ex.toString() + '\n');
+        }
+    }
 
-            BorderPane mainPane = new BorderPane();
-            TextArea textArea = new TextArea();
-            mainPane.setCenter(new ScrollPane(textArea));
-            mainPane.setTop(paneForTextField);
-            textArea.setEditable(false);
+    public void receiveMessage(Message message) {
+        Platform.runLater(() -> {
+            chatArea.appendText(message.toString() + '\n');
+        });
+    }
 
-            Scene scene = new Scene(mainPane, 1350, 600);
-            primary.setTitle(address.getText() + ":" + port.getText() + "### ChatClient ### " + name);
-            primary.setScene(scene);
-
-            textField.setOnAction(e -> {
-                try {
-
-                    String text = textField.getText().trim();
-                    Message msg = new Message(name, text);
-
-                    toServer.writeObject(msg);
-                    toServer.flush();
-                    System.out.println(msg);
-                    textField.clear();
-                } catch (IOException ex) {
-                    System.err.println(ex.toString());
-                    System.err.println(1);
-                }
-            });
-
-            new Thread(() -> {
-                while(true) {
-                    try {
-                        Object obj = fromServer.readObject();
-                        if (obj instanceof Message) {
-                            Message msg = (Message) obj;
-                            Platform.runLater(() -> {
-                                textArea.appendText(msg.getAuthor() + ": " + msg.getText() + "\n");
-                            });
-                        }
-                    } catch (NullPointerException e) {
-
-                    } catch (IOException|ClassNotFoundException ex) {
-                        System.err.println(ex.toString());
-                        try {
-                            Thread.sleep(1000);
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }
-            }).start();
-
+    private void configureChatInputField() {
+        chatInput.setOnAction(e -> {
             try {
-                Socket socket = new Socket(address.getText(), Integer.parseInt(port.getText()));
+                String text = chatInput.getText().trim();
+                Message msg = new Message(username.getText().trim(), text);
 
-                fromServer = new ObjectInputStream(socket.getInputStream());
+                toServer.writeObject(msg);
+                toServer.flush();
+                System.out.println(msg);
+                chatInput.clear();
+            } catch (IOException ex) {
+                System.err.println(ex.toString());
+                System.err.println(1);
+            }
+        });
+    }
 
-                toServer = new ObjectOutputStream(socket.getOutputStream());
-            }
-            catch (IOException ex) {
-                textArea.appendText(ex.toString() + '\n');
-            }
+    private void createAndOpenChatScene() {
+        String name = username.getText().trim();
+
+        BorderPane paneForTextField = new BorderPane();
+        paneForTextField.setPadding(new Insets(5, 5, 5, 5));
+        paneForTextField.setLeft(new Label("Input message: "));
+
+        chatInput = new TextField();
+        chatInput.setAlignment(Pos.BOTTOM_LEFT);
+        paneForTextField.setCenter(chatInput);
+
+        BorderPane mainPane = new BorderPane();
+        chatArea = new TextArea();
+        mainPane.setCenter(new ScrollPane(chatArea));
+        mainPane.setTop(paneForTextField);
+        chatArea.setEditable(false);
+
+        Scene scene = new Scene(mainPane, 1350, 600);
+        primary.setTitle(address.getText() + ":" + port.getText() + " ### ChatClient ### " + name);
+        primary.setScene(scene);
     }
 }
