@@ -57,7 +57,7 @@ public class UserSession implements Runnable {
                         System.out.println(ex.toString());
                         running = false;
                         server.sendMessage(new StatusMessage(username, "has disconnected."));
-                        server.unregisterUser(this);
+                        server.removeUser(this);
                         break;
                     }
                 }

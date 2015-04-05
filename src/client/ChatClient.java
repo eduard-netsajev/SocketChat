@@ -1,6 +1,7 @@
 package client;
 
 import common.Message;
+import common.NumericTextField;
 import common.StatusMessage;
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -77,7 +78,7 @@ public class ChatClient extends Application implements ServerObserver {
 
     private void launchChat(TextField userField) {
         user = userField.getText().trim();
-        if (user.length() < 4) {
+        if (user.length() <= 3) {
             setErrorMessage();
             return;
         }
@@ -101,7 +102,7 @@ public class ChatClient extends Application implements ServerObserver {
     }
 
     private void informServer() {
-        Message informationMessage = new StatusMessage(user, " connected to server.");
+        Message informationMessage = new StatusMessage(user, "connected to server.");
         sendMessage(informationMessage);
     }
 
