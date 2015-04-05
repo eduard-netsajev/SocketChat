@@ -6,76 +6,97 @@ import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
-import javafx.scene.control.TextArea;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
-import java.util.Random;
 
 public class ChatClient extends Application {
-    // IO streams
     ObjectOutputStream toServer;
     ObjectInputStream fromServer;
 
-    String name = "Client " + new Random().nextInt(777);
+    TextField username;
+    TextField address;
+    TextField port;
 
-    @Override // Override the start method in the Application class
+    @Override
     public void start(Stage primaryStage) {
+        primaryStage.setTitle("ChatClient ### Connection configuration");
+        Label addressLabel = new Label("Server IP: ");
+        address = new TextField("127.0.0.1");
+        HBox addressInput = new HBox(5, addressLabel, address);
 
-        Label lbl = new Label("Username: ");
-        TextField username = new TextField();
-        HBox hbox = new HBox(lbl, username);
-        primaryStage.setTitle("ChatClient");
-        primaryStage.setScene(new Scene(hbox));
+        Label portLabel = new Label("Port: ");
+        port = new NumericTextField("8000");
 
-        username.setOnAction(o -> {
+        HBox portInput = new HBox(5, portLabel, port);
 
-            name = username.getText().trim();
+        Button proceedButton = new Button("OK");
+        VBox serverInput = new VBox(10, addressInput, portInput, proceedButton);
+        serverInput.setAlignment(Pos.CENTER);
+        serverInput.setPadding(new Insets(10, 10, 10, 10));
+
+        primaryStage.setScene(new Scene(serverInput));
+
+        Label usernameLabel = new Label("Username: ");
+        username = new TextField();
+
+        HBox usernameInput = new HBox(usernameLabel, username);
+        Button usernameButton = new Button("OK");
+        HBox userInput = new HBox(usernameLabel, usernameInput, usernameButton);
+
+        username.setOnAction(e -> primaryStage.setScene(new Scene(userInput)));
+        port.setOnAction(e -> primaryStage.setScene(new Scene(userInput)));
+        proceedButton.setOnAction(e -> primaryStage.setScene(new Scene(userInput)));
+
+        usernameButton.setOnAction(e -> openChat(primaryStage));
+        username.setOnAction(e -> openChat(primaryStage));
+
+        primaryStage.setOnCloseRequest(e -> System.exit(0));
+        primaryStage.show();
+    }
+
+    private void openChat(Stage primaryStage) {
+
+            String name = username.getText().trim();
 
 
-            // Panel p to hold the label and text field
             BorderPane paneForTextField = new BorderPane();
             paneForTextField.setPadding(new Insets(5, 5, 5, 5));
             paneForTextField.setStyle("-fx-border-color: green");
             paneForTextField.setLeft(new Label("Input message: "));
 
-            TextField tf = new TextField();
-            tf.setAlignment(Pos.BOTTOM_LEFT);
-            paneForTextField.setCenter(tf);
+            TextField textField = new TextField();
+            textField.setAlignment(Pos.BOTTOM_LEFT);
+            paneForTextField.setCenter(textField);
 
             BorderPane mainPane = new BorderPane();
-            // Text area to display contents
-            TextArea ta = new TextArea();
-            mainPane.setCenter(new ScrollPane(ta));
+            TextArea textArea = new TextArea();
+            mainPane.setCenter(new ScrollPane(textArea));
             mainPane.setTop(paneForTextField);
-            ta.setEditable(false);
+            textArea.setEditable(false);
 
-            // Create a scene and place it in the stage
             Scene scene = new Scene(mainPane, 1350, 600);
-            primaryStage.setTitle("ChatClient ### " + name); // Set the stage title
-            primaryStage.setScene(scene); // Place the scene in the stage
+            primaryStage.setTitle(address.getText() + ":" + port.getText() + "### ChatClient ### " + name);
+            primaryStage.setScene(scene);
 
-            tf.setOnAction(e -> {
+            textField.setOnAction(e -> {
                 try {
-                    // Get the radius from the text field
-                    String text = tf.getText().trim();
+
+                    String text = textField.getText().trim();
                     Message msg = new Message(name, text);
 
-                    // Send the radius to the server
                     toServer.writeObject(msg);
                     toServer.flush();
                     System.out.println(msg);
-                    tf.clear();
-                }
-                catch (IOException ex) {
+                    textField.clear();
+                } catch (IOException ex) {
                     System.err.println(ex.toString());
                     System.err.println(1);
                 }
@@ -88,7 +109,7 @@ public class ChatClient extends Application {
                         if (obj instanceof Message) {
                             Message msg = (Message) obj;
                             Platform.runLater(() -> {
-                                ta.appendText(msg.getAuthor() + ": " + msg.getText() + "\n");
+                                textArea.appendText(msg.getAuthor() + ": " + msg.getText() + "\n");
                             });
                         }
                     } catch (NullPointerException e) {
@@ -105,23 +126,14 @@ public class ChatClient extends Application {
             }).start();
 
             try {
-                // Create a socket to connect to the server
-                Socket socket = new Socket("localhost", 8000);
-                //Socket socket = new Socket("192.168.0.101", 8000);
+                Socket socket = new Socket(address.getText(), Integer.parseInt(port.getText()));
 
-                // Create an input stream to receive data from the server
                 fromServer = new ObjectInputStream(socket.getInputStream());
 
-                // Create an output stream to send data to the server
                 toServer = new ObjectOutputStream(socket.getOutputStream());
             }
             catch (IOException ex) {
-                ta.appendText(ex.toString() + '\n');
+                textArea.appendText(ex.toString() + '\n');
             }
-
-
-        });
-
-        primaryStage.show(); // Display the stage
     }
 }
