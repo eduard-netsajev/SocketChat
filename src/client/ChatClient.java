@@ -25,51 +25,84 @@ public class ChatClient extends Application {
     TextField address;
     TextField port;
 
+    Stage primary;
+
+    public static void main(String[] args) {
+        launch(args);
+    }
+
     @Override
     public void start(Stage primaryStage) {
-        primaryStage.setTitle("ChatClient ### Connection configuration");
-        Label addressLabel = new Label("Server IP: ");
-        address = new TextField("127.0.0.1");
-        HBox addressInput = new HBox(5, addressLabel, address);
+        this.primary = primaryStage;
 
-        Label portLabel = new Label("Port: ");
-        port = new NumericTextField("8000");
+        Scene userScene = createUserConfigScene();
+        prepareHostConfigScene(userScene);
 
-        HBox portInput = new HBox(5, portLabel, port);
+        primary.setOnCloseRequest(e -> System.exit(0));
+        primary.show();
+    }
+
+    private Scene createUserConfigScene() {
+        HBox usernameInputBox = createUsernameInputBox();
 
         Button proceedButton = new Button("OK");
+        proceedButton.setOnAction(e -> openChat());
+
+        HBox userInput = new HBox(usernameInputBox, proceedButton);
+        return new Scene(userInput);
+    }
+
+    private HBox createUsernameInputBox() {
+        Label usernameLabel = new Label("Username: ");
+        username = new TextField();
+        username.setOnAction(e -> openChat());
+        return new HBox(usernameLabel, username);
+    }
+
+    private void prepareHostConfigScene(Scene nextScene) {
+        primary.setTitle("ChatClient ### Connection configuration");
+
+        HBox addressInput = createAddressBox(nextScene);
+        HBox portInput = createPortBox(nextScene);
+        Button proceedButton = crerateButtonNext(nextScene);
+
+        Scene serverScene = createServerScene(addressInput, portInput, proceedButton);
+        primary.setScene(serverScene);
+    }
+
+    private Scene createServerScene(HBox addressInput, HBox portInput, Button proceedButton) {
         VBox serverInput = new VBox(10, addressInput, portInput, proceedButton);
         serverInput.setAlignment(Pos.CENTER);
         serverInput.setPadding(new Insets(10, 10, 10, 10));
-
-        primaryStage.setScene(new Scene(serverInput));
-
-        Label usernameLabel = new Label("Username: ");
-        username = new TextField();
-
-        HBox usernameInput = new HBox(usernameLabel, username);
-        Button usernameButton = new Button("OK");
-        HBox userInput = new HBox(usernameLabel, usernameInput, usernameButton);
-
-        username.setOnAction(e -> primaryStage.setScene(new Scene(userInput)));
-        port.setOnAction(e -> primaryStage.setScene(new Scene(userInput)));
-        proceedButton.setOnAction(e -> primaryStage.setScene(new Scene(userInput)));
-
-        usernameButton.setOnAction(e -> openChat(primaryStage));
-        username.setOnAction(e -> openChat(primaryStage));
-
-        primaryStage.setOnCloseRequest(e -> System.exit(0));
-        primaryStage.show();
+        return new Scene(serverInput);
     }
 
-    private void openChat(Stage primaryStage) {
+    private Button crerateButtonNext(Scene nextScene) {
+        Button proceedButton = new Button("OK");
+        proceedButton.setOnAction(e -> primary.setScene(nextScene));
+        return proceedButton;
+    }
+
+    private HBox createPortBox(Scene nextScene) {
+        Label portLabel = new Label("Port: ");
+        port = new NumericTextField("8000");
+        port.setOnAction(e -> primary.setScene(nextScene));
+        return new HBox(5, portLabel, port);
+    }
+
+    private HBox createAddressBox(Scene nextScene) {
+        Label addressLabel = new Label("Server IP: ");
+        address = new TextField("127.0.0.1");
+        address.setOnAction(e -> primary.setScene(nextScene));
+        return new HBox(5, addressLabel, address);
+    }
+
+    private void openChat() {
 
             String name = username.getText().trim();
 
-
             BorderPane paneForTextField = new BorderPane();
             paneForTextField.setPadding(new Insets(5, 5, 5, 5));
-            paneForTextField.setStyle("-fx-border-color: green");
             paneForTextField.setLeft(new Label("Input message: "));
 
             TextField textField = new TextField();
@@ -83,8 +116,8 @@ public class ChatClient extends Application {
             textArea.setEditable(false);
 
             Scene scene = new Scene(mainPane, 1350, 600);
-            primaryStage.setTitle(address.getText() + ":" + port.getText() + "### ChatClient ### " + name);
-            primaryStage.setScene(scene);
+            primary.setTitle(address.getText() + ":" + port.getText() + "### ChatClient ### " + name);
+            primary.setScene(scene);
 
             textField.setOnAction(e -> {
                 try {
