@@ -20,6 +20,7 @@ public class Message implements Serializable {
         return text;
     }
 
+    @Override
     public String toString() {
         return author + ": " + text;
     }

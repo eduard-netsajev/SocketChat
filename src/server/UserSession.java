@@ -1,6 +1,7 @@
 package server;
 
 import common.Message;
+import common.StatusMessage;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -10,19 +11,17 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class UserSession implements Runnable {
-    private Socket socket;
     private ChatServer server;
 
     private boolean running;
+    private String username;
 
     ObjectOutputStream outputToClient;
     ObjectInputStream inputFromClient;
 
     BlockingQueue<Message> messages;
 
-    /** Construct a thread */
     public UserSession(Socket socket, ChatServer server) {
-        this.socket = socket;
         this.server = server;
         messages = new LinkedBlockingQueue<>();
 
@@ -36,7 +35,10 @@ public class UserSession implements Runnable {
         }
     }
 
-    /** Run a thread */
+    private boolean userIsSet() {
+        return username != null;
+    }
+
     public void run() {
         try {
             new Thread(() -> {
@@ -45,12 +47,16 @@ public class UserSession implements Runnable {
                         Object obj = inputFromClient.readObject();
                         if (obj instanceof Message) {
                             Message msg = (Message) obj;
+
+                            if (!userIsSet())
+                                username = msg.getAuthor();
+
                             server.broadcastMessage(msg);
                         }
                     } catch (IOException|ClassNotFoundException ex) {
                         System.out.println(ex.toString());
                         running = false;
-
+                        server.broadcastMessage(new StatusMessage(username, "has disconnected."));
                         server.unregisterUser(this);
                         break;
                     }

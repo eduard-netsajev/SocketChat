@@ -23,7 +23,7 @@ public class ConnectionListeningThread extends Thread {
         try {
             Platform.runLater(() -> {
                 server.appendToTextArea(
-                        "MultiThread ChatServer started at " + new Date() + '\n');
+                        "MultiThread ChatServer started at " + serverSocket + " on " + new Date() + '\n');
             });
 
             while (true) {
