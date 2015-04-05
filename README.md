@@ -1,5 +1,5 @@
 # SocketChat
-Chat application
+Portable configurable communication system.
 
 JavaFX8 based chat application powered by Sockets and Multithreading.
 Communication made through server app which stores the conversation and broadcasts it to the users.
