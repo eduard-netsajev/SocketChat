@@ -1,5 +1,6 @@
 package server;
 
+import common.StatusMessage;
 import javafx.application.Platform;
 
 import java.io.IOException;
@@ -21,10 +22,8 @@ public class ConnectionListeningThread extends Thread {
     @Override
     public void run() {
         try {
-            Platform.runLater(() -> {
-                server.appendToTextArea(
-                        "MultiThread ChatServer started at " + serverSocket + " on " + new Date() + '\n');
-            });
+            String messageText = "MultiThread ChatServer started at " + serverSocket + " on " + new Date() + '\n';
+            server.sendMessage(new StatusMessage("SYSTEM", messageText));
 
             while (true) {
                 // Listen for a new connection request
@@ -32,8 +31,8 @@ public class ConnectionListeningThread extends Thread {
 
                 Platform.runLater( () -> {
                     // Display the client number
-                    server.appendToTextArea(
-                            "Connection from " + socket.toString() + " at " + new Date() + '\n');
+                    server.sendMessage(new StatusMessage("SYSTEM",
+                            "Connection from " + socket.toString() + " at " + new Date()));
                 });
 
                 // Create and start a new thread for the connection

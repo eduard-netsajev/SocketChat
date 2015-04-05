@@ -51,12 +51,12 @@ public class UserSession implements Runnable {
                             if (!userIsSet())
                                 username = msg.getAuthor();
 
-                            server.broadcastMessage(msg);
+                            server.sendMessage(msg);
                         }
                     } catch (IOException|ClassNotFoundException ex) {
                         System.out.println(ex.toString());
                         running = false;
-                        server.broadcastMessage(new StatusMessage(username, "has disconnected."));
+                        server.sendMessage(new StatusMessage(username, "has disconnected."));
                         server.unregisterUser(this);
                         break;
                     }
@@ -75,7 +75,7 @@ public class UserSession implements Runnable {
         }
     }
 
-    void addMessage(Message msg) {
+    void sendMessage(Message msg) {
         messages.offer(msg);
     }
 }
