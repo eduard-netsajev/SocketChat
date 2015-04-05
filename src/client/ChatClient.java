@@ -10,10 +10,10 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
-import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
@@ -34,9 +34,7 @@ public class ChatClient extends Application implements ServerObserver {
     private String user;
 
     public void receiveMessage(Message message) {
-        Platform.runLater(() -> {
-            chatArea.appendText(message.toString() + '\n');
-        });
+        Platform.runLater(() -> chatArea.appendText(message.toString() + '\n'));
     }
 
     public static void main(String[] args) {
@@ -79,11 +77,27 @@ public class ChatClient extends Application implements ServerObserver {
 
     private void launchChat(TextField userField) {
         user = userField.getText().trim();
+        if (user.length() < 4) {
+            setErrorMessage();
+            return;
+        }
         createAndOpenChatScene();
         configureChatInputField();
         openSocketStreams();
         informServer();
         new Thread(new ServerListener(fromServer, this)).start();
+    }
+
+    private void setErrorMessage() {
+        Stage errorStage = new Stage();
+        errorStage.setTitle("Error");
+
+        Label message = new Label("Username is not valid, must be at least 4 characters");
+        message.setPadding(new Insets(20));
+        Pane messagePane = new Pane(message);
+
+        errorStage.setScene(new Scene(messagePane));
+        errorStage.show();
     }
 
     private void informServer() {
@@ -96,7 +110,7 @@ public class ChatClient extends Application implements ServerObserver {
 
         HBox addressInput = createAddressBox(nextScene);
         HBox portInput = createPortBox(nextScene);
-        Button proceedButton = crerateButtonNext(nextScene);
+        Button proceedButton = createButtonNext(nextScene);
 
         Scene serverScene = createServerScene(addressInput, portInput, proceedButton);
         primary.setScene(serverScene);
@@ -109,7 +123,7 @@ public class ChatClient extends Application implements ServerObserver {
         return new Scene(serverInput);
     }
 
-    private Button crerateButtonNext(Scene nextScene) {
+    private Button createButtonNext(Scene nextScene) {
         Button proceedButton = new Button("OK");
         proceedButton.setOnAction(e -> primary.setScene(nextScene));
         return proceedButton;
@@ -155,7 +169,7 @@ public class ChatClient extends Application implements ServerObserver {
             toServer.writeObject(msg);
             toServer.flush();
             chatInput.clear();
-        } catch (IOException e) {
+        } catch (Exception e) {
             System.err.println("Failed sending message to server: " + e.toString());
         }
     }

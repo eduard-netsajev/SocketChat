@@ -24,8 +24,8 @@ public class ServerListener implements Runnable {
                     Message msg = (Message) obj;
                     client.receiveMessage(msg);
                 }
-            } catch (NullPointerException e) {
-
+            } catch (NullPointerException ignored) {
+                // ignore
             } catch (IOException |ClassNotFoundException ex) {
                 System.err.println(ex.toString());
                 try {

@@ -19,7 +19,7 @@ import java.util.List;
 public class ConfigurableChatServer extends Application implements ChatServer {
 
     public static final int TEXT_AREA_PREF_HEIGHT = 600;
-    public static final int TEXT_AREA_PREF_WITDH = 1350;
+    public static final int TEXT_AREA_PREF_WIDTH = 1350;
 
     private List<UserSession> userList = new ArrayList<>();
 
@@ -77,7 +77,7 @@ public class ConfigurableChatServer extends Application implements ChatServer {
 
     private void configureMainTextArea() {
         mainTextArea.setEditable(false);
-        mainTextArea.setPrefWidth(TEXT_AREA_PREF_WITDH);
+        mainTextArea.setPrefWidth(TEXT_AREA_PREF_WIDTH);
         mainTextArea.setPrefHeight(TEXT_AREA_PREF_HEIGHT);
     }
 }

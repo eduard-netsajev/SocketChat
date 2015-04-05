@@ -23,7 +23,7 @@ public class ConnectionListeningThread extends Thread {
     public void run() {
         try {
             String messageText = "MultiThread ChatServer started at " + serverSocket + " on " + new Date() + '\n';
-            server.sendMessage(new StatusMessage("SYSTEM", messageText));
+            server.sendMessage(new StatusMessage("SYS", messageText));
 
             while (true) {
                 // Listen for a new connection request
@@ -31,7 +31,7 @@ public class ConnectionListeningThread extends Thread {
 
                 Platform.runLater( () -> {
                     // Display the client number
-                    server.sendMessage(new StatusMessage("SYSTEM",
+                    server.sendMessage(new StatusMessage("SYS",
                             "Connection from " + socket.toString() + " at " + new Date()));
                 });
 
